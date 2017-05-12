@@ -4,31 +4,41 @@
 
 #include <jni.h>
 #include <stdio.h>
+#include "common.h"
 // 获取数组的大小
 # define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
 // 指定要注册的类，对应完整的java类名
-#define JNIREG_CLASS "com/sven/fixlib/HotFix"
+#define JNIREG_CLASS "com/sven/fixlib/hotfix/HotFix"
 
-jstring stringFromJNI(JNIEnv* env, jobject /* this */) {
+// art module
+extern void art_replaceMethod(JNIEnv *env, jobject src, jobject dest);
+
+extern void art_setFieldFlag(JNIEnv *env, jobject field);
+
+jstring stringFromJNI(JNIEnv *env, jobject /* this */) {
     char hello[] = "Hello from C+++";
     return env->NewStringUTF(hello);
+}
+
+static void replaceMethod(JNIEnv *env, jclass clazz, jobject src, jobject dest) {
+    art_replaceMethod(env, src, dest);
+}
+
+static void setFieldFlag(JNIEnv *env, jclass clazz, jobject field) {
+    art_setFieldFlag(env, field);
 }
 
 /*
  * JNI registration.
  */
 static JNINativeMethod gMethods[] = {
-    {
-        "getJniString",
-        "()Ljava/lang/String;",
-        (void*) stringFromJNI
-    }
+        {"replaceMethod", "(Ljava/lang/reflect/Method;Ljava/lang/reflect/Method;)V", (void *) replaceMethod},
+        {"setFieldFlag",  "(Ljava/lang/reflect/Field;)V",                            (void *) setFieldFlag},
 };
 
 // 注册native方法到java中
-static int registerNativeMethods(JNIEnv* env, const char* className,
-JNINativeMethod* gMethods, int numMethods)
-{
+static int registerNativeMethods(JNIEnv *env, const char *className,
+                                 JNINativeMethod *gMethods, int numMethods) {
     jclass clazz;
     clazz = env->FindClass(className);
     if (clazz == NULL) {
@@ -41,19 +51,17 @@ JNINativeMethod* gMethods, int numMethods)
     return JNI_TRUE;
 }
 
-int register_ndk_load(JNIEnv *env)
-{
+int register_ndk_load(JNIEnv *env) {
     // 调用注册方法
     return registerNativeMethods(env, JNIREG_CLASS,
-        gMethods, NELEM(gMethods));
+                                 gMethods, NELEM(gMethods));
 }
 
-JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
-{
-    JNIEnv* env = NULL;
+JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+    JNIEnv *env = NULL;
     jint result = -1;
 
-    if (vm->GetEnv((void**) &env, JNI_VERSION_1_4) != JNI_OK) {
+    if (vm->GetEnv((void **) &env, JNI_VERSION_1_4) != JNI_OK) {
         return result;
     }
 

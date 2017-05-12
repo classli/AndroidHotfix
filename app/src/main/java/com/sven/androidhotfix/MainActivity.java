@@ -4,7 +4,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import com.sven.fixlib.HotFix;
+import com.sven.fixlib.hotfix.HotFix;
+import com.sven.test.A;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -12,8 +13,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        TextView tx = (TextView)findViewById(R.id.tx);
-        HotFix ht = new HotFix();
-        tx.setText(ht.getJniString());
+        TextView tx = (TextView) findViewById(R.id.tx);
+        tx.setText(A.a(""));
     }
 }
